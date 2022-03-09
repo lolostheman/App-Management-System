@@ -31,7 +31,7 @@
         <%try { %>
           <%if(user){ %>
           <a href="/login"><%=user[1]%>, <%=user[0]%></a>
-          <a href="/logout">Logout</a>
+          <a onclick="showDiv()" >Logout</a>
           <%}%>
         <%}catch (error) {%>
           <a href="/login">Login</a>

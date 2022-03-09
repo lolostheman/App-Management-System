@@ -5,3 +5,8 @@ function submit_form(){
         }
     }    
 }
+
+function showDiv() {
+    document.getElementById('logout-div').style.display = "block";
+    document.getElementById('modal').style.display = "block";
+ }
