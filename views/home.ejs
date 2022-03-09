@@ -1,4 +1,10 @@
-<%- include('partials/header') %>
+
+<% try { %>
+  <%- include('partials/header', {user: [firstName, lastName]}) %>
+<%} catch(error) { %>
+  <%- include('partials/header')%>
+<%} %>
+
 
 
 

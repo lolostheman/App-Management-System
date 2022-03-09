@@ -25,7 +25,7 @@ app.use(passport.session());
 mongoose.connect("mongodb://localhost:27017/AppDB");
 const userSchema = new mongoose.Schema({
     firstName: String,
-    LastName: String,
+    lastName: String,
     email: String,
     Password: String,
 });
@@ -55,7 +55,7 @@ passport.deserializeUser(function (id, done) {
 
 app.get("/", function (req, res) {
     if (req.isAuthenticated()) {
-        console.log(req.user.id);
+        
         appCollection.find({
             userID: req.user.id
         }, function (err, foundItems) {
@@ -63,7 +63,9 @@ app.get("/", function (req, res) {
                 console.log(err)
             } else {
                 res.render("home", {
-                    foundApps: foundItems
+                    foundApps: foundItems,
+                    firstName: req.user.firstName,
+                    lastName: req.user.lastName
                 })
             }
         })
@@ -76,7 +78,8 @@ app.get("/", function (req, res) {
             } else {
                 if (foundItems) {
                     res.render("home", {
-                        foundApps: foundItems
+                        foundApps: foundItems,
+                        firstName: "Login"
                     });
                 }
             }
@@ -114,11 +117,22 @@ app.post("/register", function (req, res) {
     userCollection.register({
         username: req.body.username
     }, req.body.password, function (err, user) {
+        console.log(user)
         if (err) {
             console.log(err);
             res.redirect("/register");
         } else {
             passport.authenticate('local')(req, res, function () {
+                userCollection.update({
+                    _id: req.user._id
+                }, {
+                    firstName: req.body.firstName,
+                    lastName: req.body.lastName
+                }, function(err){
+                    if (err){
+                        console.log(err);
+                    }
+                })
                 res.redirect("/");
             })
         }
