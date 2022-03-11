@@ -1,4 +1,8 @@
-<%- include('partials/header') %>
+<% try { %>
+    <%- include('partials/header', {user: [firstName, lastName]}) %>
+  <%} catch(error) { %>
+    <%- include('partials/header')%>
+  <%} %>
 
 <section class="vh-100">
     <div class="container py-5">

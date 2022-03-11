@@ -1,4 +1,8 @@
-<%- include('partials/header') %>
+<% try { %>
+    <%- include('partials/header', {user: [firstName, lastName]}) %>
+  <%} catch(error) { %>
+    <%- include('partials/header')%>
+  <%} %>
 
 <form style="padding: 5% 30%;" method="post" action="/add_item">
     <!-- Text input -->

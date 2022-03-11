@@ -6,6 +6,10 @@ const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const findOrCreate = require('mongoose-findorcreate');
+const date = require('./time_module');
+const {
+    redirect
+} = require("express/lib/response");
 const app = express();
 
 app.use(express.static("public"));
@@ -32,16 +36,29 @@ const userSchema = new mongoose.Schema({
 
 const appSchema = new mongoose.Schema({
     name: String,
-    hint: String,
+    //hint: String,
     userID: String
 
 });
+
+const eventSchema = new mongoose.Schema({
+    eventName: String,
+    startTime: String,
+    endTime: String,
+    eventMonth: String,
+    eventDat: String,
+    eventYear: String,
+    eventInfo: String,
+    appID: String
+});
+
 
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
 
 userCollection = new mongoose.model("User", userSchema);
 appCollection = new mongoose.model("App", appSchema);
+eventCollection = new mongoose.model("Event", eventSchema);
 
 passport.use(userCollection.createStrategy());
 passport.serializeUser(function (user, done) {
@@ -55,7 +72,7 @@ passport.deserializeUser(function (id, done) {
 
 app.get("/", function (req, res) {
     if (req.isAuthenticated()) {
-        
+
         appCollection.find({
             userID: req.user.id
         }, function (err, foundItems) {
@@ -108,7 +125,7 @@ app.post("/login", function (req, res) {
         }
     })
 });
-app.get("/logout", function(req, res){
+app.get("/logout", function (req, res) {
 
     req.logout();
     res.redirect("/")
@@ -132,8 +149,8 @@ app.post("/register", function (req, res) {
                 }, {
                     firstName: req.body.firstName,
                     lastName: req.body.lastName
-                }, function(err){
-                    if (err){
+                }, function (err) {
+                    if (err) {
                         console.log(err);
                     }
                 })
@@ -144,7 +161,10 @@ app.post("/register", function (req, res) {
 });
 
 app.get("/add_item", function (req, res) {
-    res.render("add_item");
+    res.render("add_item", {
+        firstName: req.user.firstName,
+        lastName: req.user.lastName
+    });
 })
 
 app.post("/add_item", function (req, res) {
@@ -168,12 +188,78 @@ app.post("/add_item", function (req, res) {
     } else {
         res.redirect("/login");
     }
+});
+
+app.get("/apps/:appName", function (req, res) {
+    const date_ob = new Date();
+    
+    if (req.isAuthenticated) {
+        appCollection.find({
+            userID: req.user.id,
+            name: req.params.appName
+        }, function (err, foundApp) { //should be single app for "foundApp"
+            console.log(foundApp[0]._id.valueOf());
+
+            eventCollection.find({
+                appID: foundApp[0]._id.valueOf()
+            }, function (err, foundItems) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log(date_ob.getDate())
+                    console.log(foundItems);
+                    res.render("schedule", {
+                        date: date.getDate(),
+                        appTitle: req.params.appName,
+                        firstName: req.user.firstName,
+                        lastName: req.user.lastName
+                    });
+                }
 
 
-})
 
-app.get("/:appName", function (req, res) {
-    res.send(req.params.appName)
+
+            });
+
+
+        })
+    } else {
+        res.redirect("/");
+    }
+
+});
+
+app.get("/:appName/event-submission", function (req, res) {
+    res.render('event-submission', {
+        appTitle: req.params.appName,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName
+    });
+});
+app.post("/:appName/event-submission", function (req, res) {
+
+    if (req.isAuthenticated) {
+        appCollection.find({
+            userID: req.user.id,
+            name: req.params.appName
+        }, function(err, foundApp){
+            console.log(foundApp[0])
+            eventCollection.insertMany([{
+            eventName: req.body.eventName,
+            startTime: req.body.startTime,
+            endTime: req.body.endTime,
+            eventMonth: req.body.eventMonth,
+            eventDay: req.body.eventDay,
+            eventYear: req.body.eventYear,
+            eventInfo: req.body.eventInfo,
+            appID: foundApp[0]._id.valueOf()
+        }])
+        res.redirect("/apps/" + req.params.appName);
+        });
+        
+    } else {
+        res.redirect("/apps/" + req.params.appName);
+    }
 })
 
 app.listen(3000, function () {
