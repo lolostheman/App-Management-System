@@ -6,7 +6,7 @@ const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const findOrCreate = require('mongoose-findorcreate');
-const date = require('./time_module');
+const myDate = require('./time_module');
 const {
     redirect
 } = require("express/lib/response");
@@ -46,7 +46,7 @@ const eventSchema = new mongoose.Schema({
     startTime: String,
     endTime: String,
     eventMonth: String,
-    eventDat: String,
+    eventDay: String,
     eventYear: String,
     eventInfo: String,
     appID: String
@@ -191,8 +191,8 @@ app.post("/add_item", function (req, res) {
 });
 
 app.get("/apps/:appName", function (req, res) {
-    const date_ob = new Date();
-    
+
+
     if (req.isAuthenticated) {
         appCollection.find({
             userID: req.user.id,
@@ -206,13 +206,22 @@ app.get("/apps/:appName", function (req, res) {
                 if (err) {
                     console.log(err);
                 } else {
-                    console.log(date_ob.getDate())
-                    console.log(foundItems);
+                    var eventsToAdd = [];
+                    foundItems.forEach(item => {
+                        eventsToAdd.push({
+                            title : item.eventName,
+                            start : item.startTime,
+                            end : item.endTime,
+                            url : "/apps"+req.params.appName                          
+                        })
+                    });
+                    console.log(eventsToAdd)
                     res.render("schedule", {
-                        date: date.getDate(),
+                        date: myDate.getCurrentDate(),
                         appTitle: req.params.appName,
                         firstName: req.user.firstName,
-                        lastName: req.user.lastName
+                        lastName: req.user.lastName,
+                        foundEvents: eventsToAdd
                     });
                 }
 
@@ -236,27 +245,27 @@ app.get("/:appName/event-submission", function (req, res) {
         lastName: req.user.lastName
     });
 });
-app.post("/:appName/event-submission", function (req, res) {
-
+app.post("/:appName/event-submission", function (req, res) { 
     if (req.isAuthenticated) {
+        
         appCollection.find({
             userID: req.user.id,
             name: req.params.appName
-        }, function(err, foundApp){
+        }, function (err, foundApp) {
             console.log(foundApp[0])
             eventCollection.insertMany([{
-            eventName: req.body.eventName,
-            startTime: req.body.startTime,
-            endTime: req.body.endTime,
-            eventMonth: req.body.eventMonth,
-            eventDay: req.body.eventDay,
-            eventYear: req.body.eventYear,
-            eventInfo: req.body.eventInfo,
-            appID: foundApp[0]._id.valueOf()
-        }])
-        res.redirect("/apps/" + req.params.appName);
+                eventName: req.body.eventName,
+                startTime: myDate.getStringDate(req.body.eventYear, req.body.eventMonth, req.body.eventDay, req.body.startTime),
+                endTime: myDate.getStringDate(req.body.eventYear, req.body.eventMonth, req.body.eventDay, req.body.endTime),
+                eventMonth: req.body.eventMonth,
+                eventDay: req.body.eventDay,
+                eventYear: req.body.eventYear,
+                eventInfo: req.body.eventInfo,
+                appID: foundApp[0]._id.valueOf()
+            }])
+            res.redirect("/apps/" + req.params.appName);
         });
-        
+
     } else {
         res.redirect("/apps/" + req.params.appName);
     }
