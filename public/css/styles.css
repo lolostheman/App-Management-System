@@ -86,6 +86,29 @@ body {
     text-align: center;
     z-index: 11;
 }
+#delete-div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    background-color: rgba(0, 0, 0, 0.5);
+
+}
+
+#delete-modal {
+    width: 30%;
+    height: 30%;
+    line-height: 200px;
+    position: fixed;
+    top: 30%;
+    left: 35%;
+    background-color: #ffffff;
+    border-radius: 5px;
+    text-align: center;
+    z-index: 11;
+}
 
 .popup {
     padding: 7% 7% 0%;
@@ -110,6 +133,7 @@ body {
   #calendar {
     max-width: 1100px;
     margin: 0 auto;
+    z-index: 1;
   }
   .event-submission {
      
@@ -118,6 +142,13 @@ body {
 
   .form-group {
       padding: 2% 15%;
+  }
+
+  .right-side{
+      position: relative;
+      display: block;
+      text-align: right;
+      float: right;
   }
 
 

@@ -11,6 +11,11 @@ function showDiv() {
     document.getElementById('modal').style.display = "block";
 }
 
+function showDeleteDiv(){
+    document.getElementById('delete-div').style.display = "block";
+    document.getElementById('delete-modal').style.display = "block";
+}
+
 
 
 function displayTime() {
@@ -32,5 +37,5 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     cal.bindData(mockData);
     cal.render();
   });
-  
+
   $('#input_starttime').pickatime({});

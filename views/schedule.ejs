@@ -36,11 +36,13 @@
             calendar.render();
         });
     </script>
+
 </head>
 <div class="left-side">
     <h1><%=appTitle%></h1>
-    <a href="/<%=appTitle%>/event-submission"><button type="button" class="btn btn-secondary">Add event</button></a>
-    <button type="button" class="btn btn-danger">Edit event</button>
+    <a href="/<%=appTitle%>/event-submission"><button type="button" class="btn btn-secondary">Add Event</button></a>
+    <a href="/apps/<%=appTitle%>/events"><button type="button" class="btn btn-secondary">Edit Events</button></a>
+    <a href="/apps/<%=appTitle%>/delete"><button type="button" class="btn btn-danger">Delete Category</button></a>
 </div>
 <div id='calendar'></div>
 

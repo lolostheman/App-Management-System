@@ -24,7 +24,7 @@
   <header>
     <div class="topnav">
       <a href="/" class="active">Appointment Managemnt System</a>
-      <a href="#">Help</a>
+      <a href="/">Home</a>
       <div class="topnav-right">
         <form class="search-bar" action="/search" method="post">
           <input type="text" class="form-control" id="usr" placeholder="Search">
@@ -32,11 +32,11 @@
         <%try { %>
           <%if(user){ %>
           <a href="/login"><%=user[1]%>, <%=user[0]%></a>
-          <a style="color:#f2f2f2;" onclick="showDiv()" >Logout</a>
+          <a style="color:#f2f2f2; padding-right: 2rem;" onclick="showDiv()" >Logout </a>
           <%}%>
         <%}catch (error) {%>
           <a href="/login">Login</a>
-          <a href="/register">Register</a>
+          <a style="padding-right: 2rem;" href="/register">Register</a>
         <% } %>
 
 

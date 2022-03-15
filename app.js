@@ -43,6 +43,8 @@ const appSchema = new mongoose.Schema({
 
 const eventSchema = new mongoose.Schema({
     eventName: String,
+    unformatedStartTime: String,
+    unformatedEndTime: String,
     startTime: String,
     endTime: String,
     eventMonth: String,
@@ -88,17 +90,14 @@ app.get("/", function (req, res) {
         })
     } else {
         appCollection.find({
-            email: "test1@gmail.com"
+            userID: "622fed8b6bde50cfdb3ad7ad" //this is dummy data ID
         }, function (err, foundItems) {
             if (err) {
-                console.log(err);
+                console.log(err)
             } else {
-                if (foundItems) {
-                    res.render("home", {
-                        foundApps: foundItems,
-                        firstName: "Login"
-                    });
-                }
+                res.render("home", {
+                    foundApps: foundItems,
+                })
             }
         })
     }
@@ -138,7 +137,7 @@ app.post("/register", function (req, res) {
     userCollection.register({
         username: req.body.username
     }, req.body.password, function (err, user) {
-        console.log(user)
+        
         if (err) {
             console.log(err);
             res.redirect("/register");
@@ -161,14 +160,21 @@ app.post("/register", function (req, res) {
 });
 
 app.get("/add_item", function (req, res) {
-    res.render("add_item", {
-        firstName: req.user.firstName,
-        lastName: req.user.lastName
-    });
-})
+
+    if (req.isAuthenticated()) {
+        res.render("add_item", {
+            firstName: req.user.firstName,
+            lastName: req.user.lastName
+        })
+    } else {
+        res.render("add_item")
+    }
+
+});
+
 
 app.post("/add_item", function (req, res) {
-    if (req.isAuthenticated) {
+    if (req.isAuthenticated()) {
         if (req.body.addedTitle.length >= 3) {
             appCollection.insertMany([{
                 name: req.body.addedTitle,
@@ -193,12 +199,12 @@ app.post("/add_item", function (req, res) {
 app.get("/apps/:appName", function (req, res) {
 
 
-    if (req.isAuthenticated) {
+    if (req.isAuthenticated()) {
         appCollection.find({
             userID: req.user.id,
             name: req.params.appName
         }, function (err, foundApp) { //should be single app for "foundApp"
-            console.log(foundApp[0]._id.valueOf());
+           
 
             eventCollection.find({
                 appID: foundApp[0]._id.valueOf()
@@ -209,13 +215,13 @@ app.get("/apps/:appName", function (req, res) {
                     var eventsToAdd = [];
                     foundItems.forEach(item => {
                         eventsToAdd.push({
-                            title : item.eventName,
-                            start : item.startTime,
-                            end : item.endTime,
-                            url : "/apps"+req.params.appName                          
+                            title: item.eventName,
+                            start: item.startTime,
+                            end: item.endTime,
+                            url: "/apps/" + req.params.appName + "/" + item._id + "/event"
                         })
                     });
-                    console.log(eventsToAdd)
+                    
                     res.render("schedule", {
                         date: myDate.getCurrentDate(),
                         appTitle: req.params.appName,
@@ -224,37 +230,158 @@ app.get("/apps/:appName", function (req, res) {
                         foundEvents: eventsToAdd
                     });
                 }
-
-
-
-
             });
-
-
         })
     } else {
-        res.redirect("/");
+        appCollection.find({
+            userID: "622fed8b6bde50cfdb3ad7ad",
+            name: req.params.appName
+        }, function (err, foundApp) { //should be single app for "foundApp"
+            
+
+            eventCollection.find({
+                appID: foundApp[0]._id.valueOf()
+            }, function (err, foundItems) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    var eventsToAdd = [];
+                    foundItems.forEach(item => {
+                        eventsToAdd.push({
+                            title: item.eventName,
+                            start: item.startTime,
+                            end: item.endTime,
+                            url: "/apps/" + req.params.appName + "/" + item._id + "/event"
+                        })
+                    });
+                    
+                    res.render("schedule", {
+                        date: myDate.getCurrentDate(),
+                        appTitle: req.params.appName,
+                        foundEvents: eventsToAdd
+                    });
+                }
+            });
+        })
     }
 
 });
 
-app.get("/:appName/event-submission", function (req, res) {
-    res.render('event-submission', {
-        appTitle: req.params.appName,
-        firstName: req.user.firstName,
-        lastName: req.user.lastName
-    });
+app.get("/apps/:appName/:eventId/event", function (req, res) {
+    if (req.isAuthenticated()) {
+        appCollection.find({
+            userID: req.user.id,
+            name: req.params.appName
+        }, function (err, foundApp) { //should be single app for "foundApp"
+            
+            eventCollection.find({
+                _id: req.params.eventId
+            }, function (err, foundItems) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    res.render("events_view", {
+                        firstName: req.user.firstName,
+                        lastName: req.user.lastName,
+                        foundEvents: foundItems
+                    });
+                }
+
+            })
+        })
+    } else {
+        appCollection.find({
+            userID: "622fed8b6bde50cfdb3ad7ad",
+            name: req.params.appName
+        }, function (err, foundApp) { //should be single app for "foundApp"
+            
+            eventCollection.find({
+                _id: req.params.eventId
+            }, function (err, foundItems) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    res.render("events_view", {
+                        foundEvents: foundItems
+                    });
+                }
+
+            })
+        })
+    }
 });
-app.post("/:appName/event-submission", function (req, res) { 
-    if (req.isAuthenticated) {
-        
+
+
+app.get("/apps/:appName/events/", function (req, res) {
+    if (req.isAuthenticated()) {
+        appCollection.find({
+            userID: req.user.id,
+            name: req.params.appName
+        }, function (err, foundApp) { //should be single app for "foundApp"
+            
+            eventCollection.find({
+                appID: foundApp[0]._id.valueOf()
+            }, function (err, foundItems) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    res.render("events_view", {
+                        firstName: req.user.firstName,
+                        lastName: req.user.lastName,
+                        foundEvents: foundItems
+                    });
+                }
+
+            })
+        })
+    } else {
+        appCollection.find({
+            userID: "622fed8b6bde50cfdb3ad7ad",
+            name: req.params.appName
+        }, function (err, foundApp) { //should be single app for "foundApp"
+            
+            eventCollection.find({
+                appID: foundApp[0]._id.valueOf()
+            }, function (err, foundItems) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    res.render("events_view", {
+                        foundEvents: foundItems
+                    });
+                }
+
+            })
+        })
+    }
+});
+
+
+app.get("/:appName/event-submission", function (req, res) {
+    if (req.isAuthenticated()) {
+        res.render('event-submission', {
+            appTitle: req.params.appName,
+            firstName: req.user.firstName,
+            lastName: req.user.lastName
+        });
+    } else {
+        res.render('event-submission', {
+            appTitle: req.params.appName,
+        });
+    }
+
+});
+app.post("/:appName/event-submission", function (req, res) {
+    if (req.isAuthenticated()) {
+
         appCollection.find({
             userID: req.user.id,
             name: req.params.appName
         }, function (err, foundApp) {
-            console.log(foundApp[0])
             eventCollection.insertMany([{
                 eventName: req.body.eventName,
+                unformatedStartTime: req.body.startTime,
+                unformatedEndTime: req.body.endTime,
                 startTime: myDate.getStringDate(req.body.eventYear, req.body.eventMonth, req.body.eventDay, req.body.startTime),
                 endTime: myDate.getStringDate(req.body.eventYear, req.body.eventMonth, req.body.eventDay, req.body.endTime),
                 eventMonth: req.body.eventMonth,
@@ -267,8 +394,99 @@ app.post("/:appName/event-submission", function (req, res) {
         });
 
     } else {
-        res.redirect("/apps/" + req.params.appName);
+        res.redirect("/register");
     }
+})
+
+app.get("/update/:eventId/event_edit", function (req, res) {
+    eventCollection.findById(req.params.eventId, function (err, foundEvent) {
+        res.render("event_edit", {
+            eventId: req.params.eventId,
+            event: foundEvent,
+            months: ["January", "February", "March", "April", "May", "June", "July",
+                "August", "September", "October", "November", "December"
+            ]
+        })
+    })
+});
+
+app.post("/:eventId/event-update", function (req, res) {
+    if (req.isAuthenticated()) {
+        eventCollection.updateOne({
+            _id: req.params.eventId
+        }, {
+            eventName: req.body.eventName,
+            unformatedStartTime: req.body.startTime,
+            unformatedEndTime: req.body.endTime,
+            startTime: myDate.getStringDate(req.body.eventYear, req.body.eventMonth, req.body.eventDay, req.body.startTime),
+            endTime: myDate.getStringDate(req.body.eventYear, req.body.eventMonth, req.body.eventDay, req.body.endTime),
+            eventMonth: req.body.eventMonth,
+            eventDay: req.body.eventDay,
+            eventYear: req.body.eventYear,
+            eventInfo: req.body.eventInfo
+        }, function (err) {
+            if (err) {
+                console.log(err);
+            } else {
+                res.redirect("/")
+            }
+        })
+
+    } else {
+        res.redirect("/register")
+    }
+});
+
+
+
+app.post("/update/:eventId", function (req, res) {
+    if (req.isAuthenticated()) {
+        if (req.body.update == "delete") {
+            backURL = req.header('Referer') || '/';
+            eventCollection.deleteOne({
+                _id: req.params.eventId
+            }, function (err) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    res.redirect(backURL)
+                }
+            })
+        } else if (req.body.update == "edit") {
+            res.redirect(req.params.eventId + "/event_edit")
+        }
+
+    } else {
+        if (req.body.update == "delete") {
+            res.redirect("/register")
+        } else {
+            res.redirect(req.params.eventId + "/event_edit")
+        }
+       
+    }
+})
+
+app.get("/apps/:appName/delete", function(req, res){
+    res.render("app-delete", {
+        appName: req.params.appName
+
+    })
+})
+app.post("/apps/:appName/delete", function(req, res){
+    if(req.isAuthenticated()){        
+        appCollection.deleteOne({name: req.params.appName, userID: req.user.id}, function(err, result){
+            if (err) {
+                res.send(err);
+              } else {
+                res.redirect("/");
+              }
+        });
+    } else {
+        res.redirect("/register")
+    }
+    
+
+    
 })
 
 app.listen(3000, function () {
